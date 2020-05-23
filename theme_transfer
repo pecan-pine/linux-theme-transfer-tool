@@ -1,0 +1,226 @@
+#!/bin/bash
+
+donor_prefix="/mnt/manjaro"
+
+themedir="/usr/share/themes"
+donor_themedir="${donor_prefix}${themedir}"
+
+sounddir="/usr/share/sounds"
+donor_sounddir="${donor_prefix}${sounddir}"
+
+backgrounddir="/usr/share/backgrounds"
+donor_backgrounddir="${donor_prefix}${backgrounddir}"
+
+icondir="/usr/share/icons"
+donor_icondir="${donor_prefix}${icondir}"
+
+gnomedir="/usr/share/gnome-shell"
+donor_gnomedir="${donor_prefix}${gnomedir}"
+
+theme_selection=()
+for theme in $(ls $donor_themedir)
+do
+    theme_selection+=( "$theme" )
+done
+
+sound_selection=()
+for sound in $(ls $donor_sounddir)
+do
+    sound_selection+=( "$sound" )
+done
+
+icon_selection=()
+for icon in $(ls $donor_icondir)
+do
+	icon_selection+=( "$icon" )
+done
+
+theme_list=()
+sound_list=()
+icon_list=()
+
+function display_current_selections {
+	echo "The following themes are selected:"
+	echo ${theme_list[@]}
+	echo "The following sounds are selected:"
+	echo ${sound_list[@]}
+	echo "The following icons are selected:"
+	echo ${icon_list[@]}
+}
+
+
+function select_themes {
+    echo "Here is a list of available themes: "
+    for theme in ${theme_selection[@]}
+    do
+        echo $theme
+    done
+    echo "Currently selected themes: "
+    echo ${theme_list[@]}
+    read -p "Please select a theme to add: " theme
+    echo "You selected $theme"
+    if [[ ! " ${theme_selection[@]} " =~ " ${theme} " ]]
+    then 
+        echo "Your theme was not in the list."
+    else 
+        echo "Your theme was in the list."
+        theme_list+=( $theme )
+        echo "Your theme was added to the selected themes."
+    fi
+}
+
+function select_sounds {
+    echo "Here is a list of available sounds: "
+    for sound in ${sound_selection[@]}
+    do
+        echo $sound
+    done
+    echo "Currently selected sounds: "
+    echo ${sound_list[@]}
+    read -p "Please select a sound to add: " sound
+    echo "You selected $sound"
+    if [[ ! " ${sound_selection[@]} " =~ " ${sound} " ]]
+    then 
+        echo "Your sound was not in the list."
+    else 
+        echo "Your sound was in the list."
+        sound_list+=( $sound )
+        echo "Your sound was added to the selected sounds."
+    fi
+}
+
+function select_icons {
+    echo "Here is a list of available icons: "
+    for icon in ${icon_selection[@]}
+    do
+        echo $icon
+    done
+    echo "Currently selected icons: "
+    echo ${icon_list[@]}
+    read -p "Please select an icon to add: " icon
+    echo "You selected $icon"
+    if [[ ! " ${icon_selection[@]} " =~ " ${icon} " ]]
+    then 
+        echo "Your icon was not in the list."
+    else 
+        echo "Your icon was in the list."
+        icon_list+=( $icon )
+        echo "Your icon was added to the selected icons."
+    fi
+}
+
+function select_all {
+	echo "Select a theme and select all will find all versions of that theme."
+	read -p "Press enter to continue: " ignored_variable
+	echo "Here is a list of available themes: "
+    for theme in ${theme_selection[@]}
+    do
+        echo $theme
+    done
+    read -p "Please select a theme to add: " theme
+    echo "You selected $theme"
+    if [[ ! " ${theme_selection[@]} " =~ " ${theme} " ]]
+    then 
+        echo "Your theme was not in the list."
+    else 
+        echo "Your theme was in the list."
+        theme_list+=( $theme )
+        sound_list+=( $theme )
+        icon_list+=( $theme )
+        echo "Your theme was added to the selected themes."
+    fi
+}
+
+function change_theme_directory {
+    read -p "What is the directory prefix you would like? Default is '/mnt/manjaro' " donor_prefix
+    echo "The following directories have been changed:"
+    donor_themedir="${donor_prefix}${themedir}"
+    echo "donor_themedir is now $donor_themedir"
+    donor_sounddir="${donor_prefix}${sounddir}"
+    echo "donor_sounddir is now $donor_sounddir"
+    donor_gnomedir="${donor_prefix}${gnomedir}"
+    echo "donor_gnomedir is now $donor_gnomedir"
+}
+
+function transfer_themes {
+	if [[ ${#theme_list[@]} -gt 0 ]]
+	then
+    	echo "Preparing to transfer the following themes from $donor_themedir to $themedir: "
+    	echo ${theme_list[@]}
+    	read -p "Press enter to continue" ignored_variable
+    	for theme in ${theme_list[@]}
+    	do
+    		donor_theme="${donor_themedir}/${theme}"
+    		sudo cp -r $donor_theme $themedir
+		echo "Copied $theme to $themedir"
+    	done
+    fi
+    
+    if [[ ${#sound_list[@]} -gt 0 ]]
+	then
+    	echo "Preparing to transfer the following sounds from $donor_sounddir to $sounddir: "
+    	echo ${sound_list[@]}
+    	read -p "Press enter to continue" ignored_variable
+    	for sound in ${sound_list[@]}
+    	do
+    		donor_sound="${donor_sounddir}/${sound}"
+    		sudo cp -r $donor_sound $sounddir
+    		echo "Copied $sound to $sounddir"
+    		echo $donor_sound
+    	done
+    fi
+    
+    if [[ ${#icon_list[@]} -gt 0 ]]
+	then
+    	echo "Preparing to transfer the following icons from $donor_icondir to $icondir: "
+    	echo ${icon_list[@]}
+    	read -p "Press enter to continue" ignored_variable
+    	for icon in ${icon_list[@]}
+    	do
+    		donor_icon="${donor_icondir}/${icon}"
+    		sudo cp -r $donor_icon $icondir
+    		echo "Copied $icon to $icondir"
+    		echo $donor_icon
+    	done
+    fi
+    
+    read -p "Copy backgrounds? (y/n)" bg
+    case $bg in
+    	y)  echo "Preparing to copy backgrounds... Saving old background folder as 'background.old'"
+    		read -p "Press enter to continue" ignored_variable 
+    		sudo mv $backgrounddir $backgrounddir.old
+    		sudo cp -r $donor_backgrounddir $backgrounddir
+    		echo "done";;
+    	n)  echo "Not copying backgrounds...";;
+    esac
+    
+    echo "Preparing to copy gresource file"
+    echo "Saving old gresource file as 'gnome-shell-theme.gresource.oldcopy'"
+    read -p "Press enter to continue" ignored_variable
+    sudo mv "$gnomedir/gnome-shell-theme.gresource" "$gnomedir/gnome-shell-theme.gresource.oldcopy"
+    sudo cp "$donor_gnomedir/gnome-shell-theme.gresource" "$gnomedir"
+}
+
+
+
+function menu {
+    PS3="What would you like to do? Select an option (press enter to display options): "
+    select action in "change theme directory" "select themes" "select sounds" "select icons" "select all" "display current selections" "transfer themes" "quit"
+    do
+        case $action in
+            "change theme directory") change_theme_directory;;
+            "select themes") select_themes;;
+            "select sounds") select_sounds;;
+            "select icons") select_icons;;
+            "select all") select_all;;
+            "display current selections") display_current_selections;;
+            "transfer themes") transfer_themes;;
+            "quit") echo "Quitting theme transfer tool..."; exit 0;;
+        esac
+    done	
+}
+
+while true
+do
+    menu
+done
